@@ -1,20 +1,28 @@
 // ========== VEHICLE DATABASE (Replace with Mr. Johnson's VINs) ==========
         const vehicles = [
-            { id: 1, vin: "1HGBH41JXMN109186", make: "Toyota", model: "Corolla", year: 2022, plate: "AS1234", status: "available" },
-            { id: 2, vin: "2FMDK3GC3DBA12345", make: "Honda", model: "Civic", year: 2021, plate: "BS5678", status: "available" },
-            { id: 3, vin: "3N1AB7AP0HY123456", make: "Nissan", model: "Altima", year: 2020, plate: "CS9012", status: "available" },
-            { id: 4, vin: "4T1BF1FK0HU123456", make: "Toyota", model: "Camry", year: 2019, plate: "DS3456", status: "available" },
-            { id: 5, vin: "5J6RM4H59FL123456", make: "Honda", model: "CR-V", year: 2018, plate: "ES7890", status: "available" },
-            { id: 6, vin: "1FTFW1ET1FK123456", make: "Ford", model: "F-150", year: 2020, plate: "FS1234", status: "available" },
-            { id: 7, vin: "2GCEC19T6H1123456", make: "Chevrolet", model: "Silverado", year: 2019, plate: "GS5678", status: "available" },
-            { id: 8, vin: "3VW2K7AJ3JM123456", make: "Volkswagen", model: "Jetta", year: 2018, plate: "HS9012", status: "available" },
-            { id: 9, vin: "4S4BRBLC7C3123456", make: "Subaru", model: "Outback", year: 2017, plate: "IS3456", status: "available" },
-            { id: 10, vin: "5NPD84LF8JH123456", make: "Hyundai", model: "Elantra", year: 2019, plate: "JS7890", status: "available" },
-            { id: 11, vin: "1C4RJFBG2KC123456", make: "Jeep", model: "Grand Cherokee", year: 2020, plate: "KS1234", status: "available" },
-            { id: 12, vin: "2FMPK3J99KBA12345", make: "Ford", model: "Edge", year: 2019, plate: "LS5678", status: "available" },
-            { id: 13, vin: "3FA6P0H78JR123456", make: "Ford", model: "Fusion", year: 2018, plate: "MS9012", status: "available" },
-            { id: 14, vin: "4T1G11AK2LU123456", make: "Toyota", model: "Avalon", year: 2020, plate: "NS3456", status: "available" },
-            { id: 15, vin: "5UXCR6C06L9B12345", make: "BMW", model: "X3", year: 2021, plate: "OS7890", status: "available" }
+            { id: 1, vin: "LC0CE4CC5P0000412", make: "BYD", model: "Dolphin", year: 2023, plate: "AS1234", status: "available" },
+            { id: 2, vin: "LC0CE4CC4P0000417", make: "BYD", model: "Dolphin", year: 2023, plate: "BS5678", status: "available" },
+            { id: 3, vin: "LC0CE4CC9P0000798", make: "BYD", model: "Dolphin(Demo)", year: 2023, plate: "CS9012", status: "available" },
+            { id: 4, vin: "LC0CE4DCXR4000075", make: "BYD", model: "Yuan Pro GL", year: 2024, plate: "DS3456", status: "available" },
+            { id: 5, vin: "LC0CE4DC2R4000099", make: "BYD", model: "Yuan Pro GL", year: 2023, plate: "ES7890", status: "available" },
+            { id: 6, vin: "LC0CE4DC0R4000036", make: "BYD", model: "Yuan Pro GL", year: 2024, plate: "FS1234", status: "available" },
+            { id: 7, vin: "LC0CE4DB8P0083355", make: "BYD", model: "T3 Cargo Van", year: 2023, plate: "GS5678", status: "available" },
+            { id: 8, vin: "LC0CE4DB8K0044130", make: "BYD", model: "T3 Cargo Van", year: 2018, plate: "HS9012", status: "available" },
+            { id: 9, vin: "LC0CE4DB7K0044121", make: "BYD", model: "T3 Cargo Van", year: 2019, plate: "IS3456", status: "available" },
+            { id: 10, vin: "LGXCE4DB3R2000273", make: "BYD", model: "Yuan Plus GL", year: 2023, plate: "JS7890", status: "available" },
+            { id: 11, vin: "LGXCE4DB5R2000212", make: "BYD", model: "Yuan Plus GL", year: 2023, plate: "KS1234", status: "available" },
+            { id: 12, vin: "LGXCE4DB3P2000478", make: "BYD", model: "Yuan Plus GL(Demo)", year: 2023, plate: "LS5678", status: "available" },
+            { id: 13, vin: "LC0CF4CD6R0025408", make: "BYD", model: "TANG", year: 2024, plate: "MS9012", status: "available" },
+            { id: 14, vin: "LC0CF4CD5P0020651", make: "BYD", model: "TANG", year: 2023, plate: "NS3456", status: "available" },
+            { id: 15, vin: "LGXCE4CB3S0081262", make: "BYD", model: "Song Plus(Demo)", year: 2021, plate: "OS7890", status: "available" },
+            { id: 16, vin: "LGXCE4DB3R2000273", make: "BYD", model: "Yuan Plus", year: 2023, plate: "OS7890", status: "available" },
+            { id: 17, vin: "LJ1EEASR4R4701005", make: "JAC", model: "E-JS4(Demo)", year: 2024, plate: "OS7890", status: "available" },
+            { id: 18, vin: "LJ1EFATR6P4016741", make: "JAC", model: "E-J7(Demo)", year: 2023, plate: "OS7890", status: "available" },
+            { id: 19, vin: "LJ1EEASRXR4701395", make: "JAC", model: "E-JS4(Demo)", year: 2024, plate: "OS7890", status: "available" },
+            { id: 20, vin: "LJ1EEASR6R4701393", make: "JAC", model: "E-JS4", year: 2024, plate: "OS7890", status: "available" },
+            { id: 21, vin: "LJ1EEASR8P4711159", make: "JAC", model: "E-JS4", year: 2024, plate: "OS7890", status: "available" },
+            { id: 22, vin: "LJ1EFATR0R7402170", make: "JAC", model: "E-J7", year: 2024, plate: "OS7890", status: "available" },
+            { id: 23, vin: "LJ1EFATR9R7402152", make: "JAC", model: "E-J7", year: 2024, plate: "OS7890", status: "available" }
         ];
 
         // ========== GLOBAL VARIABLES ==========
