@@ -187,7 +187,7 @@
             canvas.getContext('2d').scale(ratio, ratio);
             
             signaturePad = new SignaturePad(canvas, {
-                penColor: '#1e2a3e',
+                penColor: '#315086',
                 backgroundColor: '#ffffff',
                 minWidth: 1,
                 maxWidth: 3
@@ -200,67 +200,94 @@
         }
 
         // ========== HANDLE FORM SUBMISSION ==========
-        document.getElementById('checkoutForm').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            
-            // Get form values
-            const vehicleId = parseInt(document.getElementById('vehicleSelect').value);
-            const customerName = document.getElementById('customerName').value.trim();
-            const customerPhone = document.getElementById('customerPhone').value.trim();
-            const expectedReturn = document.getElementById('returnDate').value;
-            
-            // Validation
-            if (!vehicleId || !customerName || !customerPhone || !expectedReturn) {
-                alert('Please fill in all required fields');
-                return;
-            }
-            
-            if (signaturePad.isEmpty()) {
-                alert('Please capture customer signature');
-                return;
-            }
-            
-            // Get signature as image
-            const signatureDataURL = signaturePad.toDataURL('image/png');
-            
-            // Create loan record
-            const loanRecord = {
-                vehicleId: vehicleId,
-                customerName: customerName,
-                customerPhone: customerPhone,
-                expectedReturn: expectedReturn,
-                checkoutDate: new Date().toISOString(),
-                signature: signatureDataURL,
-                status: 'active'
-            };
-            
-            // Save to IndexedDB
-            const submitBtn = document.getElementById('submitBtn');
-            submitBtn.disabled = true;
-            submitBtn.textContent = 'Saving...';
-            
-            try {
-                await saveLoan(loanRecord);
-                
-                // Reset form
-                document.getElementById('customerName').value = '';
-                document.getElementById('customerPhone').value = '';
-                document.getElementById('returnDate').value = '';
-                signaturePad.clear();
-                
-                // Refresh dashboard
-                await refreshData();
-                
-                alert('✓ Vehicle checked out successfully! Signature saved.');
-                
-            } catch (error) {
-                console.error('Save error:', error);
-                alert('Error saving. Please try again.');
-            } finally {
-                submitBtn.disabled = false;
-                submitBtn.textContent = '✓ Check Out Vehicle';
+document.getElementById('checkoutForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    
+    // Get form values
+    const vehicleId = parseInt(document.getElementById('vehicleSelect').value);
+    const customerName = document.getElementById('customerName').value.trim();
+    const customerPhone = document.getElementById('customerPhone').value.trim();
+    const expectedReturn = document.getElementById('returnDate').value;
+    
+    // Validation
+    if (!vehicleId || !customerName || !customerPhone || !expectedReturn) {
+        alert('Please fill in all required fields');
+        return;
+    }
+    
+    if (signaturePad.isEmpty()) {
+        alert('Please capture customer signature');
+        return;
+    }
+    
+    // Get signature as image
+    const signatureDataURL = signaturePad.toDataURL('image/png');
+    
+    // Create loan record
+    const loanRecord = {
+        vehicleId: vehicleId,
+        customerName: customerName,
+        customerPhone: customerPhone,
+        expectedReturn: expectedReturn,
+        checkoutDate: new Date().toISOString(),
+        signature: signatureDataURL,
+        status: 'active'
+    };
+    
+    // Save to IndexedDB
+    const submitBtn = document.getElementById('submitBtn');
+    submitBtn.disabled = true;
+    submitBtn.textContent = 'Saving...';
+    
+    try {
+        // Step 1: Save locally to IndexedDB
+        const savedLoanId = await saveLoan(loanRecord);
+        
+        // Step 2: Get vehicle name for Google Sheets
+        const vehicleName = getVehicleName(vehicleId);
+        
+        // Step 3: Prepare data for Google Sheets
+        const googleSheetData = {
+            loanId: savedLoanId,
+            timestamp: new Date().toISOString(),
+            vehicle: vehicleName,
+            vehicleId: vehicleId,
+            customerName: customerName,
+            phone: customerPhone,
+            checkoutDate: new Date().toISOString(),
+            expectedReturn: expectedReturn,
+            signatureURL: signatureDataURL,
+            status: 'active'
+        };
+        
+        // Step 4: Sync to Google Sheets (don't await - let it run in background)
+        syncToGoogleSheets(googleSheetData).then(success => {
+            if (success) {
+                console.log('📤 Backup complete for loan #' + savedLoanId);
+            } else {
+                console.log('⚠️ Backup failed for loan #' + savedLoanId + ' - will retry later');
             }
         });
+        
+        // Reset form
+        document.getElementById('customerName').value = '';
+        document.getElementById('customerPhone').value = '';
+        document.getElementById('returnDate').value = '';
+        signaturePad.clear();
+        
+        // Refresh dashboard
+        await refreshData();
+        
+        alert('✓ Vehicle checked out successfully! Data saved locally and backed up to Google Sheets.');
+        
+    } catch (error) {
+        console.error('Save error:', error);
+        alert('Error saving. Please try again.');
+    } finally {
+        submitBtn.disabled = false;
+        submitBtn.textContent = '✓ Check Out Vehicle';
+    }
+});
 
         // ========== INITIALIZE APP ==========
         async function init() {
@@ -275,3 +302,48 @@
         
         // Start the app
         init();
+
+      // ========== SYNC TO GOOGLE SHEETS ==========
+const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxjIBF1PTzTTeDOuLYomCE2oCQatIcE1Ukg_OGQUkHx9GHKO_hTF0KZdII5naESN0Ur/exec';
+
+// Helper function to get vehicle name by ID
+function getVehicleName(vehicleId) {
+    const vehicle = vehicles.find(v => v.id === vehicleId);
+    return vehicle ? `${vehicle.year} ${vehicle.make} ${vehicle.model} (${vehicle.plate})` : 'Unknown Vehicle';
+}
+
+async function syncToGoogleSheets(loanData) {
+    try {
+        console.log('📤 Sending to Google Sheets:', loanData);
+        
+        const response = await fetch(GOOGLE_SCRIPT_URL, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(loanData)
+        });
+        
+        // Check if response is OK
+        if (!response.ok) {
+            console.error('HTTP Error:', response.status, response.statusText);
+            return false;
+        }
+        
+        // Parse the response
+        const result = await response.json();
+        console.log('📥 Google Sheets response:', result);
+        
+        if (result.success) {
+            console.log('✅ Synced to Google Sheets!');
+            return true;
+        } else {
+            console.error('❌ Sync failed:', result.error);
+            return false;
+        }
+        
+    } catch (error) {
+        console.error('❌ Fetch error:', error);
+        return false;
+    }
+}
