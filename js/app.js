@@ -304,7 +304,7 @@ document.getElementById('checkoutForm').addEventListener('submit', async (e) => 
         init();
 
       // ========== SYNC TO GOOGLE SHEETS ==========
-const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxjIBF1PTzTTeDOuLYomCE2oCQatIcE1Ukg_OGQUkHx9GHKO_hTF0KZdII5naESN0Ur/exec';
+const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzdgS1PXUGpe9wB0xvry8BBNEnMQa2ij3Iw7ytxVsHGm3Ben5uueHxo0N2IhSOnHckC/exec';
 
 // Helper function to get vehicle name by ID
 function getVehicleName(vehicleId) {
