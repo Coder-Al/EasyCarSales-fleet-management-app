@@ -304,7 +304,7 @@ document.getElementById('checkoutForm').addEventListener('submit', async (e) => 
         init();
 
       // ========== SYNC TO GOOGLE SHEETS ==========
-const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzdgS1PXUGpe9wB0xvry8BBNEnMQa2ij3Iw7ytxVsHGm3Ben5uueHxo0N2IhSOnHckC/exec';
+const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxXKdeapNoAMrtya6Hg-NypBRNvQqN7mwtlef1-EMF23eColJuSrVcQKGLRE949SrS6/exec';
 
 // Helper function to get vehicle name by ID
 function getVehicleName(vehicleId) {
@@ -316,31 +316,17 @@ async function syncToGoogleSheets(loanData) {
     try {
         console.log('📤 Sending to Google Sheets:', loanData);
         
-        const response = await fetch(GOOGLE_SCRIPT_URL, {
+        await fetch(GOOGLE_SCRIPT_URL, {
             method: 'POST',
+            mode: 'no-cors',  // Add this back
             headers: {
                 'Content-Type': 'application/json',
             },
             body: JSON.stringify(loanData)
         });
         
-        // Check if response is OK
-        if (!response.ok) {
-            console.error('HTTP Error:', response.status, response.statusText);
-            return false;
-        }
-        
-        // Parse the response
-        const result = await response.json();
-        console.log('📥 Google Sheets response:', result);
-        
-        if (result.success) {
-            console.log('✅ Synced to Google Sheets!');
-            return true;
-        } else {
-            console.error('❌ Sync failed:', result.error);
-            return false;
-        }
+        console.log('✅ Request sent to Google Sheets (no response check available)');
+        return true;
         
     } catch (error) {
         console.error('❌ Fetch error:', error);
