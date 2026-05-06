@@ -314,20 +314,20 @@ function getVehicleName(vehicleId) {
 
 async function syncToGoogleSheets(loanData) {
     try {
-        console.log('📤 Sending to Google Sheets:', loanData);
-        
-        await fetch(GOOGLE_SCRIPT_URL, {
+        const response = await fetch(GOOGLE_SCRIPT_URL, {
             method: 'POST',
-            mode: 'no-cors',  // Add this back
+            mode: 'cors',
             headers: {
                 'Content-Type': 'application/json',
             },
             body: JSON.stringify(loanData)
         });
-        
-        console.log('✅ Request sent to Google Sheets (no response check available)');
+
+        const result = await response.text();
+        console.log('📥 Server response:', result);
+
         return true;
-        
+
     } catch (error) {
         console.error('❌ Fetch error:', error);
         return false;
