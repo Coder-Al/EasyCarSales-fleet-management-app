@@ -2,17 +2,78 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <title>EasyCarSales - Loaner Tracker</title>
     <!-- Signature Pad Library -->
-    <script src="https://cdn.jsdelivr.net/npm/signature_pad@5.1.3/dist/signature_pad.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/signature_pad@4.0.0/dist/signature_pad.umd.min.js"></script>
     <!-- idb library for IndexedDB -->
     <script src="https://cdn.jsdelivr.net/npm/idb@8.0.2/build/umd.js"></script>
-    <link href="./css/styles.css" rel="stylesheet" type="text/css"/>
+    <link rel="stylesheet" href="./css/styles.css"/>
 </head>
 <body>
+    <!-- Offline/Online Indicator -->
+    <div class="connection-status" id="connectionStatus">
+        <div class="status-indicator online" id="statusIndicator"></div>
+        <span id="statusText">Online</span>
+    </div>
+
+    <!-- Toast Container -->
+    <div class="toast-container" id="toastContainer"></div>
+
+    <!-- Return Modal -->
+    <div class="modal" id="returnModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>🔧 Return Vehicle</h3>
+                <button class="modal-close" id="closeModalBtn">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="return-vehicle-info" id="returnVehicleInfo"></div>
+                
+                <div class="form-group">
+                    <label>Return Date & Time *</label>
+                    <input type="datetime-local" id="returnDateTime" required>
+                </div>
+
+                <div class="form-group">
+                    <label>Battery Level at Return *</label>
+                    <div class="battery-input-group">
+                        <input type="range" id="returnBatteryLevel" min="0" max="100" value="80">
+                        <span class="battery-percentage" id="returnBatteryPercent">80%</span>
+                    </div>
+                    <div class="battery-status">
+                        <div class="battery-bar">
+                            <div class="battery-fill" id="returnBatteryFill" style="width: 80%;"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Final Mileage (km)</label>
+                    <input type="number" id="returnMileage" placeholder="Enter final mileage" step="100">
+                </div>
+
+                <div class="form-group">
+                    <label>Return Condition Notes</label>
+                    <textarea id="returnNotes" rows="3" placeholder="Any damage, issues, or notes about the return..."></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label>Customer Signature (Return)</label>
+                    <div class="signature-pad-small">
+                        <canvas id="returnSignatureCanvas" width="600" height="150" style="width:100%; height:auto; touch-action:none;"></canvas>
+                    </div>
+                    <button type="button" class="btn-clear" id="clearReturnSignatureBtn">Clear Signature</button>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-clear" id="cancelReturnBtn">Cancel</button>
+                <button class="btn-confirm btn-submit" id="confirmReturnBtn">✓ Complete Return</button>
+            </div>
+        </div>
+    </div>
+
     <div class="app-container">
         <!-- Header -->
         <div class="header">
@@ -26,7 +87,7 @@
             </div>
         </div>
 
-        <!-- Dashboard - Active Loans -->
+        <!-- Active Loans Dashboard -->
         <div class="dashboard">
             <h2>📋 Currently Loaned Out</h2>
             <div id="activeLoansList" class="loan-cards">
@@ -34,51 +95,186 @@
             </div>
         </div>
 
-        <!-- Check-out Form -->
-        <div class="checkout-form">
-            <h2>🚗 Check Out New Loaner</h2>
-            <form id="checkoutForm">
-                <div class="form-grid">
-                    <div class="form-group">
-                        <label>Select Vehicle *</label>
-                        <select id="vehicleSelect" required>
-                            <option value="">-- Select a vehicle --</option>
+        <!-- Desktop Grid Layout -->
+        <div class="desktop-grid">
+            <!-- Left Column -->
+            <div class="left-column">
+                <!-- Fleet Overview -->
+                <div class="fleet-section">
+                    <h2>🚗 Fleet Status</h2>
+                    <div class="fleet-stats">
+                        <div class="stat-card available">
+                            <h3 id="availableCount">0</h3>
+                            <p>Available</p>
+                        </div>
+                        <div class="stat-card loaned">
+                            <h3 id="loanedCount">0</h3>
+                            <p>Loaned Out</p>
+                        </div>
+                        <div class="stat-card maintenance">
+                            <h3 id="maintenanceCount">0</h3>
+                            <p>Maintenance</p>
+                        </div>
+                    </div>
+                    <div id="vehicleCards" class="vehicle-cards"></div>
+                </div>
+
+                <!-- Fleet Intelligence -->
+                <div class="fleet-intelligence">
+                    <h2>📊 Fleet Intelligence</h2>
+                    
+                    <div class="fi-controls">
+                        <input type="text" placeholder="Search vehicles, plates, customers..." class="fi-search" id="searchInput">
+                        <select class="fi-filter" id="statusFilter">
+                            <option value="all">All Status</option>
+                            <option value="available">Available</option>
+                            <option value="loaned">Loaned</option>
+                            <option value="maintenance">Maintenance</option>
                         </select>
                     </div>
-                    <div class="form-group">
-                        <label>Customer Full Name *</label>
-                        <input type="text" id="customerName" placeholder="e.g., John Smith" required>
+
+                    <div class="fi-analytics">
+                        <div class="fi-card">
+                            <h3>Daily Loans</h3>
+                            <p id="dailyLoans">+3</p>
+                        </div>
+                        <div class="fi-card">
+                            <h3>Active Utilization</h3>
+                            <p id="utilization">72%</p>
+                        </div>
+                        <div class="fi-card">
+                            <h3>Avg Loan Duration</h3>
+                            <p id="avgDuration">4.2 days</p>
+                        </div>
                     </div>
-                    <div class="form-group">
-                        <label>Phone Number *</label>
-                        <input type="tel" id="customerPhone" placeholder="(242) 555-1234" required>
-                    </div>
-                    <div class="form-group">
-                        <label>Expected Return Date *</label>
-                        <input type="date" id="returnDate" required>
+
+                    <div id="vehicleGallery" class="fi-vehicles"></div>
+
+                    <div class="fi-damage">
+                        <h3>⚠️ Damage Tracking</h3>
+                        <div id="damageList"></div>
                     </div>
                 </div>
+            </div>
 
-                <!-- Signature Pad -->
-                <div class="signature-area">
-                    <label>✍️ Customer Signature *</label>
-                    <div class="signature-pad">
-                        <canvas id="signatureCanvas" width="700" height="200" style="width:100%; height:auto; touch-action:none;"></canvas>
-                    </div>
-                    <div class="signature-buttons">
-                        <button type="button" class="btn-clear" id="clearSignatureBtn">Clear Signature</button>
-                    </div>
-                </div>
+            <!-- Right Column - Checkout Form -->
+            <div class="checkout-form">
+                <h2>🚗 New Loaner Checkout</h2>
+                <form id="checkoutForm">
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label class="required">Select Vehicle</label>
+                            <select id="vehicleSelect" required>
+                                <option value="">-- Select a vehicle --</option>
+                            </select>
+                        </div>
 
-                <button type="submit" class="btn-submit" id="submitBtn">✓ Check Out Vehicle</button>
-            </form>
+                        <div class="form-group">
+                            <label class="required">Customer Full Name</label>
+                            <input type="text" id="customerName" placeholder="e.g., John Smith" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="required">Phone Number</label>
+                            <input type="tel" id="customerPhone" placeholder="(242) 555-1234" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="required">Expected Return Date</label>
+                            <input type="date" id="returnDate" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Starting Battery Level</label>
+                            <div class="battery-input-group">
+                                <input type="range" id="startBatteryLevel" min="0" max="100" value="100">
+                                <span class="battery-percentage" id="startBatteryPercent">100%</span>
+                            </div>
+                            <div class="battery-status">
+                                <div class="battery-bar">
+                                    <div class="battery-fill" id="startBatteryFill" style="width: 100%;"></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Starting Mileage (km)</label>
+                            <input type="number" id="startMileage" placeholder="Enter current mileage" step="100">
+                        </div>
+                    </div>
+
+                    <div class="signature-area">
+                        <label class="required">✍️ Customer Signature (Check-out)</label>
+                        <div class="signature-pad">
+                            <canvas id="signatureCanvas" width="700" height="200"></canvas>
+                        </div>
+                        <div class="signature-buttons">
+                            <button type="button" class="btn-clear" id="clearSignatureBtn">Clear Signature</button>
+                        </div>
+                    </div>
+
+                    <button type="submit" class="btn-submit" id="submitBtn">✓ Check Out Vehicle</button>
+                </form>
+            </div>
         </div>
 
+        <!-- RETURN MODAL -->
+<div id="returnModal" class="modal">
+    <div class="modal-content">
+
+        <div class="modal-header">
+            <h3>Vehicle Return Inspection</h3>
+            <button class="modal-close" id="closeReturnModal">&times;</button>
+        </div>
+
+        <div class="modal-body">
+
+            <!-- Vehicle Info -->
+            <div class="return-vehicle-info">
+                <p><strong id="returnVehicleName"></strong></p>
+                <p id="returnVehiclePlate"></p>
+                <p id="returnCustomerInfo"></p>
+                <p id="returnLoanDates"></p>
+            </div>
+
+            <!-- Battery -->
+            <div class="form-group">
+                <label>Battery Level</label>
+                <input type="range" id="returnBattery" min="0" max="100" value="100">
+                <div class="battery-percentage"><span id="batteryValue">100</span>%</div>
+            </div>
+
+            <!-- Condition -->
+            <div class="form-group">
+                <label>Condition</label>
+                <select id="returnCondition">
+                    <option value="good">Good</option>
+                    <option value="minor">Minor Wear</option>
+                    <option value="damaged">Damaged</option>
+                </select>
+            </div>
+
+            <!-- Damage Notes -->
+            <div class="form-group">
+                <label>Damage Notes</label>
+                <textarea id="returnDamageNotes" rows="4" placeholder="Describe any issues..."></textarea>
+            </div>
+
+        </div>
+
+        <div class="modal-footer">
+            <button class="btn-cancel" id="cancelReturn">Cancel</button>
+            <button class="btn-confirm" id="confirmReturn">Confirm Return</button>
+        </div>
+
+    </div>
+</div>
+
         <div class="footer">
-            <p>© 2025 Precision Auto Body | Loaner Tracker v1.0 | Works Offline</p>
+            <p>© 2016 EasyCarSales | Loaner Tracker v2.0 | Works Offline</p>
         </div>
     </div>
 
-    <script src="js/app.js"></script>
+    <script src="./js/app.js"></script>
 </body>
 </html>
